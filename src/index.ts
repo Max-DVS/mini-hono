@@ -1,35 +1,16 @@
-import { Hono } from "hono";
-import userRoute from "./routes/users/users.route";
-import mainRoute from "./routes/index";
-import { createBunWebSocket } from "hono/bun";
 import type { ServerWebSocket } from "bun";
 
-const app = new Hono();
-const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
+import { createBunWebSocket } from "hono/bun";
 
-export const routes = app
-  .route("/", mainRoute)
-  .route("/users", userRoute)
-  .get(
-    "/ws",
-    upgradeWebSocket((c) => {
-      return {
-        onMessage(event, ws) {
-          console.log(`Message from client: ${event.data}`);
-          console.log(`Message sent ECHO: ${event.data} `);
-          ws.send(`ECHO: ${event.data}`);
-        },
-        onClose: () => {
-          console.log("Connection closed");
-        },
-      };
-    })
-  );
+import app from "./app";
+import env from "./env";
+
+const { websocket } = createBunWebSocket<ServerWebSocket>();
+
+const port = env.PORT ?? 3000;
 
 export default {
-  port: 3000,
-  fetch: routes.fetch,
+  port,
+  fetch: app.fetch,
   websocket,
 };
-
-export type AppType = typeof routes;

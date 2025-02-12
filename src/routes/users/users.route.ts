@@ -1,86 +1,135 @@
-import { eq } from "drizzle-orm";
-import { Hono } from "hono";
-import { generateRandomName } from "../../utils";
-import { db } from "../../db";
-import { users } from "../../db/schema";
-import { zValidator } from "@hono/zod-validator";
+import { createRoute } from "@hono/zod-openapi";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
 import { z } from "zod";
 
-const app = new Hono()
-  .get("/create", async (c) => {
-    const name = generateRandomName();
+export const createAnonUser = createRoute({
+  tags: ["user"],
+  method: "get",
+  path: "/users/create",
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+      "The created user name",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      "Error generating a random user",
+    ),
+  },
+});
 
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        name,
-      })
-      .returning();
+export const list = createRoute({
+  tags: ["user"],
+  method: "get",
+  path: "/users",
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.array(
+        z.object({
+          id: z.number(),
+          name: z.string(),
+        }),
+      ),
+      "The list of registered users",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      "Error listing users",
+    ),
+  },
+});
 
-    return c.json({ user: newUser });
-  })
-  .get("/list", async (c) => {
-    const usersList = await db.select().from(users);
-
-    return c.json({ users: usersList });
-  })
-  .get("/:id", async (c) => {
-    const { id } = c.req.param();
-
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, Number(id)));
-
-    if (!user) {
-      return c.json({ error: "User not found" }, 404);
-    }
-
-    return c.json({ user });
-  })
-  .patch(
-    "/:id",
-    zValidator(
-      "json",
+export const updateName = createRoute({
+  tags: ["user"],
+  method: "patch",
+  path: "/users/:id",
+  request: {
+    body: jsonContentRequired(
       z.object({
         name: z.string(),
-      })
+      }),
+      "The user fields to update",
     ),
-    async (c) => {
-      const { id } = c.req.param();
-      const { name } = await c.req.json();
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      },
+      ),
+      "The updated user",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      "Error updating user",
+    ),
+  },
+});
 
-      const [updatedUser] = await db
-        .update(users)
-        .set({
-          name: name,
-        })
-        .where(eq(users.id, Number(id)))
-        .returning({
-          id: users.id,
-          name: users.name,
-        });
+export const listUserById = createRoute({
+  tags: ["user"],
+  method: "get",
+  path: "/users/:id",
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+      "The user",
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      "Error listing user",
+    ),
+  },
+});
 
-      if (!updatedUser) {
-        return c.json({ error: "User not found" }, 404);
-      }
+export const deleteUserById = createRoute({
+  tags: ["user"],
+  method: "delete",
+  path: "/users/:id",
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: {
+      description: "User successfully deleted",
+    },
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({
+        message: z.string(),
+      }),
+      "Error deleting user",
+    ),
+  },
+});
 
-      return c.json({
-        user: {
-          id: updatedUser.id,
-          name: updatedUser.name,
-        },
-      });
-    }
-  )
-  .delete("/:id", async (c) => {
-    const { id } = c.req.param();
-    await db
-      .delete(users)
-      .where(eq(users.id, Number(id)))
-      .returning();
-
-    return c.json(200);
-  });
-
-export default app;
+export type CreateAnonUserRoute = typeof createAnonUser;
+export type ListUsersRoute = typeof list;
+export type UpdateNameRoute = typeof updateName;
+export type ListuserByIdRoute = typeof listUserById;
+export type DeleteUserByIdRoute = typeof deleteUserById;

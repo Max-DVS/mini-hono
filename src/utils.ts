@@ -1,4 +1,4 @@
-export const generateRandomName = () => {
+export function generateRandomName() {
   const adjectives = [
     "Happy",
     "Lucky",
@@ -15,4 +15,4 @@ export const generateRandomName = () => {
   const randomNumber = Math.floor(Math.random() * 9000) + 1000;
 
   return `${randomPronoun}${randomNoun}#${randomNumber}`;
-};
+}

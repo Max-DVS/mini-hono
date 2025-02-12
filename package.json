@@ -1,28 +1,43 @@
 {
   "name": "mini-hono",
+  "type": "module",
+  "version": "0.0.1",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint --fix"
   },
   "dependencies": {
+    "@antfu/eslint-config": "^4.2.0",
     "@hono/node-server": "^1.13.8",
+    "@hono/zod-openapi": "^0.18.4",
     "@hono/zod-validator": "^0.4.2",
+    "@scalar/hono-api-reference": "^0.5.172",
     "@types/better-sqlite3": "^7.6.12",
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
+    "dotenv-expand": "^12.0.1",
     "drizzle-orm": "^0.39.3",
     "hono": "^4.6.20",
+    "hono-pino": "^0.7.2",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "stoker": "^1.4.2",
     "studio": "^0.13.5",
     "vitest": "^3.0.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^4.2.0",
     "@types/bun": "latest",
     "drizzle-kit": "^0.30.4",
+    "eslint": "^9.20.0",
+    "eslint-plugin-format": "^1.0.1",
     "tsx": "^4.19.2"
   }
 }
